@@ -6,15 +6,12 @@ from discord.ext.commands import Context
 
 
 class Paginator:
-    def __init__(self, ctx: Context, pages: typing.Iterable, *, timeout=300, delete_message=True, predicate=None,
+    def __init__(self, ctx: Context, pages: typing.Iterable, *, timeout=300, delete_message=True,
                  delete_message_on_timeout=False):
-        if predicate is None:
-            def predicate(_, user):
-                return user == ctx.message.author
 
         self.pages = list(pages)
-        self.predicate = predicate
         self.timeout = timeout
+        self._author = ctx.author
         self.target = ctx.channel
         self.delete_msg = delete_message
         self.delete_msg_timeout = delete_message_on_timeout
@@ -34,7 +31,7 @@ class Paginator:
         }
 
         self._page = None
-
+ 
     async def begin(self):
         """Starts pagination"""
         self._stopped = False
@@ -45,7 +42,7 @@ class Paginator:
         await self.first_page()
         while not self._stopped:
             try:
-                reaction, user = await self._client.wait_for('reaction_add', check=self.predicate, timeout=self.timeout)
+                reaction, user = await self._client.wait_for('reaction_add', check=self._react_check, timeout=self.timeout)
             except asyncio.TimeoutError:
                 await self.stop(delete=self.delete_msg_timeout)
                 continue
@@ -62,6 +59,13 @@ class Paginator:
 
             await self.navigation[reaction]()
 
+    def _react_check(self, reaction, user):
+        if user is None or user != self._author:
+            return False
+        if reaction.message.id != self._message.id:
+            return False
+        return bool(discord.utils.find(lambda emoji: reaction.emoji == emoji, self.navigation))
+  
     async def stop(self, *, delete=None):
         """Aborts pagination."""
         if delete is None:
