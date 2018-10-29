@@ -33,7 +33,7 @@ class NoResponse:
         else:
             return False
 
-class BaseLiara(commands.bot.BotBase):
+class BaseLiara:
     def __init__(self, *args, **kwargs):
         self.redis = kwargs.pop('redis', None)
         self.name = kwargs.pop('name', 'Liara')
@@ -202,11 +202,11 @@ class BaseLiara(commands.bot.BotBase):
             *[repr(x) for x in [self.user.name, self.shard_id, self.shard_count]])
 
 
-class Liara(BaseLiara, discord.Client):
+class Liara(BaseLiara, commands.Bot):
     pass
 
 
-class AutoShardedLiara(BaseLiara, discord.AutoShardedClient):
+class AutoShardedLiara(BaseLiara, commands.AutoShardedBot):
     pass
 
 
